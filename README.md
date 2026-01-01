@@ -8,12 +8,6 @@ Most AI bots act like search engines—they give you the answer immediately. **S
 
 ---
 
-## 📸 Screenshots
-
-*(Add a screenshot of your Dashboard and Chat Interface here)*
-
----
-
 ## 🌟 Key Features
 
 *   **🧠 Behavioral Fine-Tuning (LoRA):** The model runs on a custom adapter trained via **Unsloth** to suppress direct answers and generate guiding questions instead.
@@ -54,6 +48,6 @@ This project solves the "Hallucination vs. Style" problem in Generative AI.
 
 ### 1. Clone & Install
 ```bash
-git clone https://github.com/yourusername/socratic-tutor.git
+git clone https://github.com/lwq246/socratic-tutor.git
 cd socratic-tutor
 npm install
