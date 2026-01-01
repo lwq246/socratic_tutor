@@ -1,0 +1,21 @@
+# 1. Load the Base Model (The "Console")
+FROM llama3
+
+# 2. Load your Custom Training (The "Game Cartridge")
+ADAPTER ./socratic-adapter.gguf
+
+# 3. Set Parameters (Low temperature for focused teaching)
+PARAMETER temperature 0.3
+
+# 4. Set the Template
+# This matches the "<|start_header_id|>" format in your Python script.
+TEMPLATE """<|start_header_id|>system<|end_header_id|>
+
+{{ .System }}<|eot_id|><|start_header_id|>user<|end_header_id|>
+
+{{ .Prompt }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
+
+"""
+
+# 5. Set the System Prompt
+SYSTEM "You are a Socratic Tutor. Answer with questions."

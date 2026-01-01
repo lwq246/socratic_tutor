@@ -1,0 +1,54 @@
+services:
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27017/SocraticTutor
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - mongodb
+      - ollama
+    restart: unless-stopped
+    networks:
+      - socratic-network
+
+  # MongoDB Service
+  mongodb:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - socratic-network
+    environment:
+      - MONGO_INITDB_DATABASE=SocraticTutor
+
+  # Ollama Service
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+    networks:
+      - socratic-network
+    # Note: You'll need to pull the models after the container starts:
+    # docker exec -it <container_name> ollama pull sutor
+    # docker exec -it <container_name> ollama pull nomic-embed-text
+
+volumes:
+  mongodb_data:
+  ollama_data:
+
+networks:
+  socratic-network:
+    driver: bridge
+
