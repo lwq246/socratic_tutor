@@ -34,8 +34,7 @@ This project solves the "Hallucination vs. Style" problem in Generative AI.
 *   **Frontend:** Next.js 14 (App Router), Tailwind CSS, Lucide React.
 *   **AI Orchestration:** LangChain.js, Vercel AI SDK (3.2+).
 *   **Database:** MongoDB Atlas (Vector Search).
-*   **Model Serving:** Ollama (running locally or via Docker).
-*   **Fine-Tuning:** Unsloth (Python/PyTorch) used to generate the GGUF adapter.
+*   **Fine-Tuning:** Pytorch used to generate the GGUF adapter.
 
 ---
 
