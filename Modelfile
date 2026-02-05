@@ -1,21 +1,25 @@
-# 1. Load the Base Model (The "Console")
-FROM llama3
+# 1. The Base Engine (Must be the big 2GB file)
+FROM ./Hermes-3-Llama-3.2-3B.Q4_K_M.gguf
 
-# 2. Load your Custom Training (The "Game Cartridge")
-ADAPTER ./socratic-adapter.gguf
+# 2. Your Training (The small 97MB file)
+ADAPTER ./socratic-adapter-2.gguf
 
-# 3. Set Parameters (Low temperature for focused teaching)
-PARAMETER temperature 0.3
-
-# 4. Set the Template
-# This matches the "<|start_header_id|>" format in your Python script.
-TEMPLATE """<|start_header_id|>system<|end_header_id|>
-
-{{ .System }}<|eot_id|><|start_header_id|>user<|end_header_id|>
-
-{{ .Prompt }}<|eot_id|><|start_header_id|>assistant<|end_header_id|>
-
+# 3. The Hermes Chat Template (Crucial)
+TEMPLATE """<|im_start|>system
+{{ .System }}<|im_end|>
+<|im_start|>user
+{{ .Prompt }}<|im_end|>
+<|im_start|>assistant
 """
 
-# 5. Set the System Prompt
-SYSTEM "You are a Socratic Tutor. Answer with questions."
+# 4. Parameters
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "<|im_end|>"
+PARAMETER temperature 0.3
+PARAMETER num_ctx 4096
+
+# 5. System Prompt
+SYSTEM """
+You are a Socratic Tutor. Do not give the user the answer directly.
+Instead, ask guiding questions to help them find the answer themselves.
+"""
