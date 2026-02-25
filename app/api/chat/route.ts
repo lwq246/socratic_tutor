@@ -20,14 +20,22 @@ export async function POST(req: Request) {
     const historyCollection = db.collection("chat_history");
     const knowledgeCollection = db.collection("knowledge_base");
 
+    // --- NEW: EXTRACT AND FORMAT CHAT HISTORY ---
     const currentQuestion = messages[messages.length - 1].content;
     
+    // We take all messages except the last one and format them for the prompt
+    const chatHistoryString = messages
+      .slice(-5, -1) // 👈 Change: Only take the last 6 previous messages
+      .map((m: any) => (m.role === "user" ? `Student: ${m.content}` : `Tutor: ${m.content}`))
+      .join("\n");
+    // --------------------------------------------
+    console.log("📜 Chat History for Prompt:\n", chatHistoryString);
     // Save User Message immediately
     await historyCollection.insertOne({
       sessionId, subjectId, role: "user", content: currentQuestion, createdAt: new Date(),
     });
 
-    // 2. Vector Search (Manual Filter)
+    // 2. Vector Search (Keep as is)
     const vectorStore = new MongoDBAtlasVectorSearch(
       new OllamaEmbeddings({
         model: "nomic-embed-text",
@@ -48,41 +56,45 @@ export async function POST(req: Request) {
         const rootSource = (doc as any).source;
         return metaSource === subjectId || rootSource === subjectId;
       })
-      .slice(0, 3);
+      .slice(0, 2);
 
     const context = relevantDocs.map(doc => doc.pageContent).join("\n\n");
 
     // 3. Setup AI
     const model = new ChatOllama({
       baseUrl: process.env.OLLAMA_BASE_URL || "http://127.0.0.1:11434",
-      model: "sutor-v2", // Change to "llama3" if "sutor" is slow
+      model: "sutor-v2", 
       temperature: 0.3,
     });
 
+    // --- MODIFIED PROMPT TEMPLATE ---
     const chain = RunnableSequence.from([
-  PromptTemplate.fromTemplate(`
+      PromptTemplate.fromTemplate(`
     SYSTEM: You are a Socratic Tutor. 
-    - You have access to the context below.
-    - DO NOT just summarize the context.
+    - Use the CHAT HISTORY to see what you have already discussed.
+    - Use the CONTEXT to guide your questions.
+    - DO NOT repeat questions you have already asked.
     - DO NOT give the answer directly.
-    - Instead, ask the user a guiding question to check if they understand the concept in the context.
+    - Ask a guiding question to help the student progress.
     
+    CHAT HISTORY:
+    {chat_history}
+
     CONTEXT:
     {context}
     
-    USER QUESTION:
+    STUDENT QUESTION:
     {question}
     
-    YOUR RESPONSE (Ask a question):
+    YOUR RESPONSE (Ask a follow-up guiding question):
   `),
-  model,
-  new StringOutputParser(),
-]);
+      model,
+      new StringOutputParser(),
+    ]);
 
-    // 4. Create the Stream Helpers
+    // 4. Create the Stream Helpers (Keep as is)
     const { stream, handlers } = LangChainStream({
       onFinal: async (completion) => {
-        // Save to DB when finished
         await historyCollection.insertOne({
           sessionId,
           subjectId,
@@ -93,14 +105,16 @@ export async function POST(req: Request) {
       },
     });
 
-    // 5. Connect Chain to Stream
-    // Note: We use .call() or .invoke() with callbacks instead of .stream() here
+    // --- 5. MODIFIED INVOKE CALL ---
     chain.invoke(
-      { context: context, question: currentQuestion },
+      { 
+        context: context, 
+        question: currentQuestion,
+        chat_history: chatHistoryString // <--- PASSING THE HISTORY HERE
+      },
       { callbacks: [handlers] }
     );
 
-    // 6. Return the Stream Response
     return new StreamingTextResponse(stream);
 
   } catch (e: any) {
