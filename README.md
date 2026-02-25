@@ -28,7 +28,7 @@ This project solves the "Hallucination vs. Style" problem in Generative AI.
 2.  **Inference Pipeline:**
     - User asks question -> System searches MongoDB for relevant context (RAG).
     - System constructs a prompt: `System Instruction` + `Retrieved Context` + `User Question`.
-    - **Ollama** runs the prompt through **Llama-3-8B** + **Custom Socratic LoRA Adapter**.
+    - **Ollama** runs the prompt through **Llama-3.2-3B** + **Custom Socratic LoRA Adapter**.
     - Response is streamed back via **Vercel AI SDK**.
 
 ### Tech Stack
